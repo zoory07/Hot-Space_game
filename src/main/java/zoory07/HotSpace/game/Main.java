@@ -7,7 +7,6 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import javax.imageio.ImageIO;
@@ -25,7 +24,7 @@ public class Main extends Canvas {
     public static final int WIDTH = 300;
     public static final int HEIGHT = 200;
     public static final int SCALE = 3;
-    public static String NAME = "HotSpace 1.0 beta";
+    public static String NAME = "HotSpace 1.0.1b";
 
     private JFrame Ventana;
     public boolean running = false;
@@ -40,10 +39,14 @@ public class Main extends Canvas {
     private level_00_desierto lvl_desierto;
     private tiempo tiempo;
     private Inicio_menu inicio_menu;
+    
+    // Limite Escena
 
+    
     private EstadoJuego estadoJuego; // Emu
     private int delayEnter = 0; // Añadido para manejar el retraso
-
+    
+    
     private enum EstadoJuego {
         MENU,
         JUEGO,
@@ -82,25 +85,29 @@ public class Main extends Canvas {
         System.out.println("Estado inicial: " + estadoJuego);
     }
 
-  public void Sprite() throws IOException {
+    public void Sprite() throws IOException {
      try {
         // Cargar imagen desde el classpath
         BufferedImage hojaSprites = ImageIO.read(getClass().getResourceAsStream("/resources/SpriteSheet.png"));
         spriteSheet = new SpriteSheet(hojaSprites);
-
+        
+        // Animación del player correr
         int frameWidth = 30;
         int frameHeight = 30;
         int startX = 0;
         int startY = 0;
-        int numFrames = 4; // Número de frames en la fila
-
-        List<BufferedImage> correrFrames = spriteSheet.getAnimationFrames(startX, startY, frameWidth, frameHeight, numFrames);
-
+        int correr = 5;
+        int gamerover = 6;
+        
+        List<BufferedImage> correrFrames = spriteSheet.getAnimationFrames(startX, startY, frameWidth, frameHeight, correr);
+        List<BufferedImage> gameOverFrame = spriteSheet.getAnimationFrames(startX, startY, frameWidth, frameHeight, gamerover);
+        
         long frameDuracion = 100;
-        this.player = new player(0, 0, correrFrames, teclado, frameDuracion);
+        
+        this.player = new player(0, 0, correrFrames, teclado, frameDuracion, gameOverFrame);
         addKeyListener(this.teclado);
         System.out.println("Sprite inicializado correctamente");
-    } catch (IOException e) {
+     } catch (IOException e) {
          e.printStackTrace();
         System.out.println("Error al cargar la imagen del sprite");
      }
@@ -182,58 +189,67 @@ public class Main extends Canvas {
         System.out.println("Escenas inicializadas");
     }
 
+    
     public void Update() {
-        teclado.update();
+     teclado.update();
+    
+     if (delayEnter > 0) {
+        delayEnter--;
+        return;
+     }
+    
+     switch (estadoJuego) {
         
-        if (delayEnter > 0) { // Decrementar el delay si es mayor que 0
-            delayEnter--;
-            return;
-        }
-        
-        switch (estadoJuego) {
-            case MENU:
-                inicio_menu.update(teclado);
-                if (teclado.enter) {
-                    if (inicio_menu.getSeleccion() == 0) { // Jugar
-                        estadoJuego = EstadoJuego.JUEGO;
-                        tiempo.iniciar(); // Iniciar el tiempo cuando el juego comienza
-                        System.out.println("Cambio de estado: " + estadoJuego);
-                    } else if (inicio_menu.getSeleccion() == 1) { // Salir
-                        System.exit(0);
-                    }
-                    teclado.enter = false; // Asegurarse de que enter se resetee después de la selección
-                }
-                break;
-            case JUEGO:
-                if (teclado.pausa) {
-                    estadoJuego = EstadoJuego.PAUSA;
-                    teclado.pausa = false; // Resetear estado de la tecla de pausa
+        case MENU:
+            inicio_menu.update(teclado);
+            if (teclado.enter) {
+                if (inicio_menu.getSeleccion() == 0) { // Jugar
+                    estadoJuego = EstadoJuego.JUEGO;
+                    tiempo.iniciar(); // Iniciar el tiempo cuando el juego comienza
                     System.out.println("Cambio de estado: " + estadoJuego);
+                } else if (inicio_menu.getSeleccion() == 1) { // Salir
+                    System.exit(0);
+                }
+                teclado.enter = false;
+            }
+            break;
+        
+        case JUEGO:
+            if (teclado.pausa) {
+                estadoJuego = EstadoJuego.PAUSA;
+                tiempo.pausar(); // Pausar el temporizador
+                lvl_desierto.setEnPausa(true); // Indicar al nivel que está en pausa
+                teclado.pausa = false;
+                System.out.println("Cambio de estado: " + estadoJuego);
+            } else {
+                if (!lvl_desierto.isGameOver()) {
+                    lvl_desierto.update();
                 } else {
-                    if (!lvl_desierto.isGameOver()) {
-                        lvl_desierto.update();
-                    } else {
-                        // Permitir reiniciar el nivel con ENTER
-                        lvl_desierto.update();
-                    }
+                    lvl_desierto.update();
                 }
-                break;
-            case PAUSA:
-                lvl_desierto.getPausa().update(teclado);
-                if (teclado.enter) {
-                    if (lvl_desierto.getPausa().getSeleccion() == 0) { // Reanudar
-                        estadoJuego = EstadoJuego.JUEGO;
-                        System.out.println("Cambio de estado: " + estadoJuego);
-                    } else if (lvl_desierto.getPausa().getSeleccion() == 1) { // Salir al Menú Principal
-                        estadoJuego = EstadoJuego.MENU;
-                        delayEnter = 60; // Establecer el delay para prevenir selección inmediata
-                        System.out.println("Cambio de estado: " + estadoJuego);
-                    }
-                    teclado.enter = false; // Asegurarse de que enter se resetee después de la selección
+            }
+            break;
+        
+        case PAUSA:
+            lvl_desierto.getPausa().update(teclado);
+            if (teclado.enter) {
+                if (lvl_desierto.getPausa().getSeleccion() == 0) { // Reanudar
+                    estadoJuego = EstadoJuego.JUEGO;
+                    tiempo.reanudar(); // Reanudar el temporizador
+                    lvl_desierto.setEnPausa(false); // Indicar al nivel que se ha reanudado
+                    System.out.println("Cambio de estado: " + estadoJuego);
+                } else if (lvl_desierto.getPausa().getSeleccion() == 1) { // Salir al Menú Principal
+                    estadoJuego = EstadoJuego.MENU;
+                    tiempo.reiniciar(); // Reiniciar el temporizador si es necesario
+                    lvl_desierto.setEnPausa(false);
+                    delayEnter = 60;
+                    System.out.println("Cambio de estado: " + estadoJuego);
                 }
-                break;
-        }
+                teclado.enter = false; 
+            }
+            break;
     }
+ }
 
     public void Stop() {
         running = false;
@@ -282,4 +298,10 @@ public class Main extends Canvas {
         main.Game();
         main.Start();
     }
+
+
+
+
+
+
 }

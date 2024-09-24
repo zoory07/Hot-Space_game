@@ -12,38 +12,43 @@ import java.awt.Graphics;
 
 public class tiempo {
     private long inicioTiempo;
-    private long pausaTiempo;
+    private long tiempoPausadoTotal;
+    private long tiempoInicioPausa;
     private boolean enPausa;
 
     public void iniciar() {
         inicioTiempo = System.currentTimeMillis();
+        tiempoPausadoTotal = 0;
         enPausa = false;
     }
 
     public void reiniciar() {
         inicioTiempo = System.currentTimeMillis();
+        tiempoPausadoTotal = 0;
         enPausa = false;
     }
 
     public void pausar() {
         if (!enPausa) {
-            pausaTiempo = System.currentTimeMillis();
+            tiempoInicioPausa = System.currentTimeMillis();
             enPausa = true;
+            System.out.println("Temporizador pausado en: " + obtenerTiempo() + " ms");
         }
     }
 
     public void reanudar() {
         if (enPausa) {
-            inicioTiempo += System.currentTimeMillis() - pausaTiempo;
+            tiempoPausadoTotal += System.currentTimeMillis() - tiempoInicioPausa;
             enPausa = false;
+            System.out.println("Temporizador reanudado. Tiempo total pausado: " + tiempoPausadoTotal + " ms");
         }
     }
 
     public long obtenerTiempo() {
         if (enPausa) {
-            return pausaTiempo - inicioTiempo;
+            return tiempoInicioPausa - inicioTiempo - tiempoPausadoTotal;
         } else {
-            return System.currentTimeMillis() - inicioTiempo;
+            return System.currentTimeMillis() - inicioTiempo - tiempoPausadoTotal;
         }
     }
 

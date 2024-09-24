@@ -15,6 +15,7 @@ import main.java.zoory07.HotSpace.imagen.img_desierto;
 import main.java.zoory07.HotSpace.scenes.CollisionManager;
 import main.java.zoory07.HotSpace.scenes.evento.DiseñoDeDificultad_level00.AlazarCactus;
 import main.java.zoory07.HotSpace.scenes.evento.DiseñoDeDificultad_level00.GestionDePatronesDeEventos;
+import main.java.zoory07.HotSpace.scenes.evento.EscenaLimite;
 import main.java.zoory07.HotSpace.scenes.evento.EventoColision;
 import main.java.zoory07.HotSpace.scenes.evento.reinicio_level;
 import main.java.zoory07.HotSpace.scenes.evento.tiempo;
@@ -40,7 +41,10 @@ public class level_00_desierto {
     private reinicio_level reinicioLevel;
     private menu_pausa pausa;
     private boolean enPausa;
+    private EscenaLimite EscenaLimite;
+ 
 
+    
     public level_00_desierto(SpriteSheet spritesheet, teclado teclado, tiempo tiempo) throws IOException {
         this.spritesheet = spritesheet;
         this.teclado = teclado;
@@ -48,43 +52,62 @@ public class level_00_desierto {
         this.AlazarCactus = new AlazarCactus(spritesheet, 500, 30, 800, collisionManager);
         this.GestionDePatronesDeEventos = new GestionDePatronesDeEventos(AlazarCactus);
         img_desierto = new img_desierto(0, 0);
+        
         this.tiempo = tiempo;
 
         this.reinicioLevel = new reinicio_level(spritesheet, teclado, tiempo);
         this.reinicioLevel.setNivel(this);
-
+        
         this.pausa = new menu_pausa(0, 0); // Inicializar el menú de pausa
         this.enPausa = false;
-
         inicializarNivel();
     }
 
     private void inicializarNivel() throws IOException {
-        // Inicializar la lista de cactus
-        cactusList = new ArrayList<>();
+     // Inicializar Escena Limite
+      int escenaX = 0;  
+      int escenaY = 0;  
+      int LimitadoX = 850;
+      int LimitadoY = 900;
+      
+      EscenaLimite = new EscenaLimite(escenaX, escenaY, LimitadoX, LimitadoY);
+     
+     // Inicializar la lista de cactus
+     cactusList = new ArrayList<>();
 
-        // Animación del player
-        int frameWidth = 30;
-        int frameHeight = 30;
-        int startX = 0;
-        int startY = 0;
-        int numFrames = 4; // Número de frames en la fila
+     // Configuración para la animacion del player (correr)
+     int frameWidth = 30;
+     int frameHeight = 30;
+     int startX = 0;
+     int startYCorrer = 0;  // Coordenada Y para la animacion de "correr"
+     int numCorrerFrames = 5; // Número de frames para "correr"
 
-        List<BufferedImage> correrFrames = spritesheet.getAnimationFrames(startX, startY, frameWidth, frameHeight, numFrames);
+     // Configuración para la animacion de (Game Over)
+     int startXGameOver = frameWidth * 5;  
+     int startYGameOver = 0;  
+     int numGameOverFrames = 1;  
 
-        if (!correrFrames.isEmpty()) {
-            long frameDuracion = 100;
-            this.player = new player(440, 400, correrFrames, teclado, frameDuracion);
-        }
+     // Cargar los frames de "correr"
+     List<BufferedImage> correrFrames = spritesheet.getAnimationFrames(startX, startYCorrer, frameWidth, frameHeight, numCorrerFrames);
+    
+     // Cargar el frame de "Game Over"
+     List<BufferedImage> gameOverFrames = spritesheet.getAnimationFrames(startXGameOver, startYGameOver, frameWidth, frameHeight, numGameOverFrames);
+    
+     if (!correrFrames.isEmpty()) {
+        long frameDuracion = 100;
+        this.player = new player(440, 400, correrFrames, teclado, frameDuracion, gameOverFrames);
+     }
+     
+     // Añadir el hitbox del jugador al CollisionManager
+     if (this.player != null && this.player.getHitbox() != null) {
+        collisionManager.addHitbox(this.player.getHitbox());
+     }
 
-        if (this.player != null && this.player.getHitbox() != null) {
-            collisionManager.addHitbox(this.player.getHitbox());
-        }
+     EventoColision = new EventoColision(player, cactusList, tiempo);
+     this.GameOver = false;
+     System.out.println("Nivel inicializado"); // Mensaje de depuracion
+   }
 
-        EventoColision = new EventoColision(player, cactusList, tiempo);
-        this.GameOver = false;
-        System.out.println("Nivel inicializado"); // Mensaje de depuración
-    }
 
     public void reiniciarNivel() throws IOException {
         inicializarNivel();
@@ -94,39 +117,33 @@ public class level_00_desierto {
     }
 
     public void update() {
-        teclado.update(); // Actualizar el estado del teclado siempre
-
-        if (teclado.pausa) { 
-            enPausa = !enPausa;
-            teclado.pausa = false; // Resetear estado de la tecla de pausa
-        }
-
         if (!enPausa && !GameOver) {
+            // Actualizar los elementos del juego
+            player.update();
             AlazarCactus.update(player);
             AlazarCactus.checkCollisionsWithPlayer(player);
-            player.update();
             collisionManager.checkCollisions();
             GestionDePatronesDeEventos.update();
 
-            
             for (piedra c : AlazarCactus.getCactusList()) {
                 if (!cactusList.contains(c)) {
                     cactusList.add(c);
                 }
             }
-
+            
             EventoColision.checkColision();
-
             if (EventoColision.isGameOver()) {
                 GameOver = true;
-                System.out.println("Game Over"); // Mensaje de depuración
+                player.setGameOver();
+                System.out.println("Game Over");
             }
         } else if (GameOver) {
-            // Si GameOver es verdadero, verificar si la tecla ENTER está presionada
             reinicioLevel.reiniciar();
         } else if (enPausa) {
-            pausa.update(teclado); // Actualizar el menú de pausa
+            pausa.update(teclado);
         }
+    
+        EscenaLimite.RestricionDeLimite(player);
     }
 
     public void render(Graphics g) {
@@ -140,7 +157,7 @@ public class level_00_desierto {
             }
         }
 
-        if (tiempo != null) {
+        if (!enPausa && tiempo != null) {
             tiempo.render(g, 10, 20);
         }
 
@@ -153,13 +170,16 @@ public class level_00_desierto {
         if (GameOver) {
             g.setColor(Color.RED);
             g.setFont(new Font("Arial", Font.BOLD, 50));
-            g.drawString("GAME OVER", 300, 300); // Ajustar la posición
+            g.drawString("GAME OVER", 300, 300);
             g.drawString("Reiniciar(Enter)", 250, 350);
         } else if (enPausa) {
             pausa.render(g); // Renderizar el menú de pausa
         }
     }
-
+    
+    public void setEnPausa(boolean enPausa) {
+        this.enPausa = enPausa;
+    }
     public boolean isGameOver() {
         return GameOver;
     }
@@ -167,4 +187,10 @@ public class level_00_desierto {
     public menu_pausa getPausa() {
         return pausa;
     }
+
+
+
+
+
+
 }

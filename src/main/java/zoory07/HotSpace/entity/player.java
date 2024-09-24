@@ -7,6 +7,8 @@ import main.java.zoory07.HotSpace.imagen.animacion.entity_a.player.Player_animac
 import main.java.zoory07.HotSpace.imagen.hitbox;
 import main.java.zoory07.HotSpace.imagen.sombra_entity.sombra_player;
 import main.java.zoory07.HotSpace.game.teclado;
+import main.java.zoory07.HotSpace.imagen.animacion.entity_a.player.Player_animacion_GameOver;
+import main.java.zoory07.HotSpace.scenes.evento.EscenaLimite;
 
 
 
@@ -18,61 +20,76 @@ public class player {
     public teclado teclado;
     public int velocidad = 13;
     private hitbox hitbox;
-    private boolean mostrarHitbox = false; // Algo temporal para el debug
+    private boolean mostrarHitbox = false;
     public sombra_player sombra;
-
+    private boolean isGameOver = false;
+    
     // Animaciones
     private Player_animacion_corriendo animacionCorriendo;
-
+    private Player_animacion_GameOver animacionGameOver;
     
-    public player(int x, int y, List<BufferedImage> correrFrames, teclado teclado, long frameDuracion) {
+    // Escena Limitada
+    private EscenaLimite EscenaLimite;
+    
+     
+    public player(int x, int y, List<BufferedImage> correrFrames, teclado teclado, long frameDuracion, List<BufferedImage> gameOverFrame) {
         this.x = x;
         this.y = y;
         this.teclado = teclado;
+
+        // Inicializar las animaciones
         this.animacionCorriendo = new Player_animacion_corriendo(correrFrames, frameDuracion);
+        this.animacionGameOver = new Player_animacion_GameOver(gameOverFrame, 500, 2000);  // Game Over
 
         // Asumimos que todos los frames tienen el mismo tamaño
         BufferedImage primerFrame = correrFrames.get(0);
         this.width = primerFrame.getWidth();
         this.height = primerFrame.getHeight();
-
-        double scaleFactor = 1.0; // tamaño actual del hitbox en el juego
+        
+ 
+        
+        // Configurar el hitbox
+        double scaleFactor = 1.0;
         int scaledWidth = (int) (width * scaleFactor);
         int scaledHeight = (int) (height * scaleFactor);
-
-        int hitboxWidth = (int) (scaledWidth * 0.99); // La hitbox es más pequeña que el sprite escalado
-        int hitboxHeight = (int) (scaledHeight * 1.9); // La hitbox es más pequeña que el sprite escalado
+        int hitboxWidth = (int) (scaledWidth * 0.99);
+        int hitboxHeight = (int) (scaledHeight * 1.9);
         int hitboxOffsetX = (scaledWidth - hitboxWidth) / 2;
-        int hitboxOffsetY = (scaledHeight - hitboxHeight)/ 2;
-
+        int hitboxOffsetY = (scaledHeight - hitboxHeight) / 2;
+        
         this.hitbox = new hitbox(x + hitboxOffsetX, y + hitboxOffsetY, hitboxWidth, hitboxHeight);
         this.sombra = new sombra_player(x, y + hitboxHeight, hitboxWidth * 2, hitboxHeight);
     }
 
+    // Alternar la visibilidad del hitbox
     public void toggleHitboxVisibility() {
         this.mostrarHitbox = !mostrarHitbox;
     }
 
+   
     public void update() {
-        if (teclado != null) {
-            teclado.update();
-        }
-        teclado();
-        int hitboxOffsetX = (int) (width * 0.85); // Ajusta estos valores según sea necesario
-        int hitboxOffsetY = (int) (height * 0.8); // Ajusta estos valores según sea necesario
-        hitbox.updatePosition(x + hitboxOffsetX, y + hitboxOffsetY);
-        if (sombra != null) {
+        if (isGameOver) {
+            animacionGameOver.update();  
+        } else {
+            teclado.update();  // Actualizar el estado del teclado
+            teclado();
+            animacionCorriendo.update();  // Actualizar la animación de correr
+          
+            int hitboxOffsetX = (int) (width * 0.85);
+            int hitboxOffsetY = (int) (height * 0.8);
+            hitbox.updatePosition(x + hitboxOffsetX, y + hitboxOffsetY);
             sombra.x = this.x;
             sombra.y = this.y + height;
             sombra.update();
         }
-
-        animacionCorriendo.update();
+        
     }
 
+    
     public void teclado() {
-        int movimientoX = 0;
+        if (isGameOver) return;  // No permitir movimiento en Game Over
 
+        int movimientoX = 0;
         if (teclado.derecha) {
             movimientoX += velocidad;
         }
@@ -81,16 +98,26 @@ public class player {
         }
 
         x += movimientoX;
-    }
 
-    public void render(Graphics g) {
         
-        double scaleFactor = 3.0; // Ajusta este valor para escalar el sprite
+    }
+    
+  
+
+  
+    public void render(Graphics g) {
+        double scaleFactor = 3.0;
         int scaledWidth = (int) (width * scaleFactor);
         int scaledHeight = (int) (height * scaleFactor);
-        int adjustedY = y + 39; // Ajusta este valor para mover el sprite hacia abajo
-        animacionCorriendo.render(g, x, adjustedY - (scaledHeight - height), scaledWidth, scaledHeight);
+        int adjustedY = y + 39; // Ajuste de la posición vertical
 
+        if (isGameOver) {
+            animacionGameOver.render(g, x, y, scaledWidth, scaledHeight);  // Renderizar Game Over
+        } else {
+            animacionCorriendo.render(g, x, adjustedY - (scaledHeight - height), scaledWidth, scaledHeight);  // Renderizar la animación de correr
+        }
+
+        // Renderizar hitbox y sombra para depuración
         if (mostrarHitbox && hitbox != null) {
             hitbox.render(g);
         }
@@ -99,15 +126,31 @@ public class player {
         }
     }
 
+    
     public void updatePosition(int deltaX, int deltaY) {
+        if (isGameOver) return;  // No permitir movimiento en "Game Over"
+        
         x += deltaX;
         y += deltaY;
-        int hitboxOffsetX = (int) (width * 0.25); // Ajusta estos valores según sea necesario
-        int hitboxOffsetY = (int) (height * 0.8); // Ajusta estos valores según sea necesario
+
+        int hitboxOffsetX = (int) (width * 0.25);
+        int hitboxOffsetY = (int) (height * 0.8);
         hitbox.updatePosition(x + hitboxOffsetX, y + hitboxOffsetY);
     }
 
-    // Centrar Player
+    // Getter y Setter del hitbox
+    public hitbox getHitbox() {
+        return hitbox;
+    }
+
+    // Método para activar el estado "Game Over"
+    public void setGameOver() {
+        isGameOver = true;
+        animacionGameOver.reset();  // Reiniciar la animación de Game Over
+        System.out.println("Estado de Game Over activado.");
+    }
+
+    // Métodos para obtener el ancho y alto del jugador
     public int getWidth() {
         return width;
     }
@@ -124,12 +167,13 @@ public class player {
         this.y = y;
     }
 
-    public hitbox getHitbox() {
-        return hitbox;
+    public int getX() {
+       return x;
     }
 
-
-
+    public int getY() {
+       return y; 
+    }
 
 
 }

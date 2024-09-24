@@ -28,10 +28,10 @@ public class reinicio_level {
 
     public void reiniciar() {
         if (teclado.enter) {
-            System.out.println("Reiniciando nivel..."); // Mensaje de depuración
+            System.out.println("Reiniciando nivel..."); 
             try {
                 nivel.reiniciarNivel();
-                tiempo.reiniciar();
+                tiempo.reanudar();
                 teclado.enter = false; 
             } catch (IOException e) {
                 e.printStackTrace();

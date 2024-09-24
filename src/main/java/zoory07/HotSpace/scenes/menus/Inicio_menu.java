@@ -34,7 +34,7 @@ public class Inicio_menu {
         this.x = x;
         this.y = y;
         cargarImagen("/resources/menu_inicio.png");
-        titulo = new titulo("/resources/titulo.png", x + 10, y + 5);
+        titulo = new titulo("/resources/titulo.png", x + 10, y + 20);
         lastInputTime = System.currentTimeMillis();
     }
 

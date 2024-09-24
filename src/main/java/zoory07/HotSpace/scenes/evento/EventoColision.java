@@ -9,19 +9,25 @@ import main.java.zoory07.HotSpace.imagen.hitbox;
 
 
 
-//Evento que pausa el juego como colision con cactus, cualquier cosa.......
+//Evento que pausa el juego como colision con piedra, cualquier cosa.......
 
 public class EventoColision {
     private player player;
     private List<piedra> cactusList;
     private tiempo tiempo;
     private boolean gameOver;
+    private int x, y;
+    private int width, height; 
 
     public EventoColision(player player, List<piedra> cactusList, tiempo tiempo) {
         this.player = player;
         this.cactusList = cactusList;
         this.tiempo = tiempo;
         this.gameOver = false;
+        this.x = x;
+        this.y = y;
+        this.height = height;
+        this.width = width; 
     }
 
     public void checkColision() {
@@ -37,5 +43,29 @@ public class EventoColision {
 
     public boolean isGameOver() {
         return gameOver;
+    }
+    
+    public int GetX(){
+       return this.x;
+    }
+    
+    public int GetY(){
+       return this.y;
+    }
+    
+    public int getWidth(){
+       return width;
+    } 
+    
+    public int getHeight(){
+       return height;
+    }
+
+    public int setX(int escenaX) {
+      return height;
+    }
+    
+    public int setY(int escenaX) {
+      return width;
     }
 }
