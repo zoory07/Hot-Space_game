@@ -1,4 +1,4 @@
-![Captura](https://github.com/user-attachments/assets/8d1b2fee-dedb-4495-aca1-550fc0f55de7)
+![aaa](https://github.com/user-attachments/assets/e98842b7-9504-40be-ae2c-acbaaa281323)
 
 Gameplay
-![Captura](https://github.com/user-attachments/assets/ef9cbc1b-67e3-4a6d-b013-b01ed18c8695)
+![ddd](https://github.com/user-attachments/assets/9db48246-1a4d-4bde-8a84-66b276ddcdb1)
