@@ -18,11 +18,13 @@ public class player {
     private int width, height;
     private int x, y;
     public teclado teclado;
-    public int velocidad = 13;
+    public int velocidad = 15;
     private hitbox hitbox;
     private boolean mostrarHitbox = false;
     public sombra_player sombra;
     private boolean isGameOver = false;
+    private int posicionInicialX;
+    private int posicionInicialY;
     
     // Animaciones
     private Player_animacion_corriendo animacionCorriendo;
@@ -32,9 +34,12 @@ public class player {
     private EscenaLimite EscenaLimite;
     
      
-    public player(int x, int y, List<BufferedImage> correrFrames, teclado teclado, long frameDuracion, List<BufferedImage> gameOverFrame) {
+    public player(int x, int y, List<BufferedImage> correrFrames, teclado teclado, long frameDuracion, List<BufferedImage> gameOverFrame, EscenaLimite EscenaLimite) {
         this.x = x;
         this.y = y;
+        this.posicionInicialX = x;
+        this.posicionInicialY = y;
+        
         this.teclado = teclado;
 
         // Inicializar las animaciones
@@ -45,8 +50,6 @@ public class player {
         BufferedImage primerFrame = correrFrames.get(0);
         this.width = primerFrame.getWidth();
         this.height = primerFrame.getHeight();
-        
- 
         
         // Configurar el hitbox
         double scaleFactor = 1.0;
@@ -59,6 +62,9 @@ public class player {
         
         this.hitbox = new hitbox(x + hitboxOffsetX, y + hitboxOffsetY, hitboxWidth, hitboxHeight);
         this.sombra = new sombra_player(x, y + hitboxHeight, hitboxWidth * 2, hitboxHeight);
+        this.EscenaLimite = EscenaLimite;
+        
+        
     }
 
     // Alternar la visibilidad del hitbox
@@ -101,10 +107,7 @@ public class player {
 
         
     }
-    
-  
 
-  
     public void render(Graphics g) {
         double scaleFactor = 3.0;
         int scaledWidth = (int) (width * scaleFactor);
@@ -149,7 +152,12 @@ public class player {
         animacionGameOver.reset();  // Reiniciar la animación de Game Over
         System.out.println("Estado de Game Over activado.");
     }
-
+    
+    public void reiniciar(){
+       this.posicionInicialX = x;
+       this.posicionInicialY = y;
+    }
+    
     // Métodos para obtener el ancho y alto del jugador
     public int getWidth() {
         return width;
@@ -174,6 +182,7 @@ public class player {
     public int getY() {
        return y; 
     }
-
+    
+    
 
 }

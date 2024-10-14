@@ -6,8 +6,12 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import javax.imageio.ImageIO;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import main.java.zoory07.HotSpace.game.teclado;
 import main.java.zoory07.HotSpace.imagen.titulo;
+import main.java.zoory07.HotSpace.scenes.Sound;
+
 
 /**
  * Clase que representa el menú de inicio del juego.
@@ -19,6 +23,8 @@ public class Inicio_menu {
     private String[] opciones = {"Jugar", "Salir"};
     private int seleccion = 0;
     private titulo titulo;
+    private Sound sonidoMenu;
+    
     
     // Constantes y configuración de input
     private static final int INPUT_DELAY = 120; 
@@ -30,12 +36,13 @@ public class Inicio_menu {
      * @param y Posición Y del menú.
      * @throws IOException Si ocurre un error al cargar las imágenes.
      */
-    public Inicio_menu(int x, int y) throws IOException {
+    public Inicio_menu(int x, int y) throws IOException, LineUnavailableException, UnsupportedAudioFileException {
         this.x = x;
         this.y = y;
         cargarImagen("/resources/menu_inicio.png");
         titulo = new titulo("/resources/titulo.png", x + 10, y + 20);
         lastInputTime = System.currentTimeMillis();
+        sonidoMenu = new Sound("menu.wav");
     }
 
     /**
@@ -98,11 +105,13 @@ public class Inicio_menu {
             if (input.arriba) {
                 seleccionarOpcionAnterior();
                 input.arriba = false;
+                sonidoMenu.play();
             }
             // Navegar hacia abajo
             if (input.abajo) {
                 seleccionarOpcionSiguiente();
                 input.abajo = false;
+                sonidoMenu.play();
             }
             lastInputTime = currentTime; 
         }

@@ -30,18 +30,23 @@ public class AlazarCactus {
     private VelocidadDeObjecto VelocidadDeCactus;
     private sombra_entity sombra;
     private hitbox hitbox;
+    private int velocidad = 2;
+    private int velocidadInicial;
     
-    public AlazarCactus(SpriteSheet spritesheet, int spawnX, int minY, int maxY, CollisionManager collisionManager) {
+    
+    public AlazarCactus(SpriteSheet spritesheet, int velocidad, int spawnX, int minY, CollisionManager collisionManager) {
         this.collisionManager = collisionManager;
         this.spritesheet = spritesheet;
         this.spawnX = spawnX;
         this.minY = minY;
         this.maxY = maxY;
+        this.velocidadInicial = velocidadInicial;
+        this.velocidad = velocidadInicial;
         this.cactusList = new ArrayList<>();
         this.VelocidadDeCactus = new VelocidadDeObjecto(10, 5, 60);
-        
-    }
 
+    }
+    
     public void CactusImagen(int x, int y) {
         BufferedImage cactusSprite = spritesheet.getSprite(0, 30, 30, 30);
         if(cactusSprite != null){
@@ -82,7 +87,18 @@ public class AlazarCactus {
             }
         }
     }
+    
+    public void incrementarVelocidad(){
+      this.velocidad += 1;
+    }
+    
+    public void reiniciar() {
+      this.velocidad = velocidadInicial;
+      cactusList.clear();
+      collisionManager.clear();
+   }
 
+    
     public void render(Graphics g) {
         for (piedra c : cactusList) {
             c.render(g);
@@ -97,6 +113,14 @@ public class AlazarCactus {
       cactusList.clear();
       collisionManager.clear();
     }
+    
+    public int getVelocidad() {
+        return velocidad;
+    }
+
+    public void setVelocidad(int velocidad) {
+        this.velocidad = velocidad;
+    }
 
     public int getSpawnX() {
        return spawnX;
@@ -110,15 +134,9 @@ public class AlazarCactus {
         return cactusList;
     }
 
+    
 
 
-
-       
-    
- 
-    
-    
-    
     
     
 }

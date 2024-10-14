@@ -15,11 +15,13 @@ public class reinicio_level {
     private SpriteSheet spriteSheet;
     private teclado teclado;
     private tiempo tiempo;
-
+    
+    
     public reinicio_level(SpriteSheet spriteSheet, teclado teclado, tiempo tiempo) {
         this.spriteSheet = spriteSheet;
         this.teclado = teclado;
         this.tiempo = tiempo;
+        
     }
 
     public void setNivel(level_00_desierto nivel) {

@@ -7,12 +7,15 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import main.java.zoory07.HotSpace.entity.piedra;
 import main.java.zoory07.HotSpace.entity.player;
 import main.java.zoory07.HotSpace.game.teclado;
 import main.java.zoory07.HotSpace.imagen.SpriteSheet;
-import main.java.zoory07.HotSpace.imagen.img_desierto;
+import main.java.zoory07.HotSpace.imagen.animacion.Escena.Level_00_Decierto_Animacion;
 import main.java.zoory07.HotSpace.scenes.CollisionManager;
+import main.java.zoory07.HotSpace.scenes.Sound;
 import main.java.zoory07.HotSpace.scenes.evento.DiseñoDeDificultad_level00.AlazarCactus;
 import main.java.zoory07.HotSpace.scenes.evento.DiseñoDeDificultad_level00.GestionDePatronesDeEventos;
 import main.java.zoory07.HotSpace.scenes.evento.EscenaLimite;
@@ -28,7 +31,6 @@ import main.java.zoory07.HotSpace.scenes.menus.menu_pausa;
 public class level_00_desierto {
     private SpriteSheet spritesheet;
     private int x, y;
-    public img_desierto img_desierto;
     private player player;
     public teclado teclado;
     private List<piedra> cactusList;
@@ -42,16 +44,21 @@ public class level_00_desierto {
     private menu_pausa pausa;
     private boolean enPausa;
     private EscenaLimite EscenaLimite;
- 
-
     
-    public level_00_desierto(SpriteSheet spritesheet, teclado teclado, tiempo tiempo) throws IOException {
+    // Animaciones de escena
+    private Level_00_Decierto_Animacion Decierto_Animacion;  
+    
+    private Sound sonido;
+    
+    public level_00_desierto(SpriteSheet spritesheet, teclado teclado, tiempo tiempo) throws IOException, LineUnavailableException, UnsupportedAudioFileException {
         this.spritesheet = spritesheet;
         this.teclado = teclado;
         this.collisionManager = new CollisionManager();
         this.AlazarCactus = new AlazarCactus(spritesheet, 500, 30, 800, collisionManager);
         this.GestionDePatronesDeEventos = new GestionDePatronesDeEventos(AlazarCactus);
-        img_desierto = new img_desierto(0, 0);
+        
+        long intereacionAnimacion = 50;
+        Decierto_Animacion = new Level_00_Decierto_Animacion(intereacionAnimacion);
         
         this.tiempo = tiempo;
 
@@ -61,6 +68,8 @@ public class level_00_desierto {
         this.pausa = new menu_pausa(0, 0); // Inicializar el menú de pausa
         this.enPausa = false;
         inicializarNivel();
+    
+        sonido = new Sound("game_over.wav");
     }
 
     private void inicializarNivel() throws IOException {
@@ -95,7 +104,7 @@ public class level_00_desierto {
     
      if (!correrFrames.isEmpty()) {
         long frameDuracion = 100;
-        this.player = new player(440, 400, correrFrames, teclado, frameDuracion, gameOverFrames);
+        this.player = new player(440, 400, correrFrames, teclado, frameDuracion, gameOverFrames, EscenaLimite);
      }
      
      // Añadir el hitbox del jugador al CollisionManager
@@ -110,47 +119,55 @@ public class level_00_desierto {
 
 
     public void reiniciarNivel() throws IOException {
+        cactusList.clear();
+        AlazarCactus.reiniciar();
+        GestionDePatronesDeEventos.ReinicioDePatrones();
         inicializarNivel();
         tiempo.reiniciar();
         GameOver = false;
         System.out.println("Nivel reiniciado en level_00_desierto"); 
+        Decierto_Animacion.reiniciarAnimacion();
     }
 
     public void update() {
         if (!enPausa && !GameOver) {
-            // Actualizar los elementos del juego
+            //Actualizar los elementos del juego
             player.update();
             AlazarCactus.update(player);
             AlazarCactus.checkCollisionsWithPlayer(player);
             collisionManager.checkCollisions();
             GestionDePatronesDeEventos.update();
-
+            Decierto_Animacion.update();
             for (piedra c : AlazarCactus.getCactusList()) {
                 if (!cactusList.contains(c)) {
                     cactusList.add(c);
                 }
-            }
-            
+            }           
             EventoColision.checkColision();
             if (EventoColision.isGameOver()) {
                 GameOver = true;
                 player.setGameOver();
+                sonido.play();
                 System.out.println("Game Over");
             }
+        
         } else if (GameOver) {
+            Decierto_Animacion.detenerAnimacion();
             reinicioLevel.reiniciar();
         } else if (enPausa) {
             pausa.update(teclado);
         }
-    
+        
+        
+        Decierto_Animacion.update();
         EscenaLimite.RestricionDeLimite(player);
     }
 
     public void render(Graphics g) {
-        if (img_desierto != null) {
-            img_desierto.render(g);
-        }
 
+           
+        Decierto_Animacion.render(g);
+        
         for (piedra c : cactusList) {
             if (c != null) {
                 c.render(g);
@@ -176,6 +193,9 @@ public class level_00_desierto {
             pausa.render(g); // Renderizar el menú de pausa
         }
     }
+
+
+    
     
     public void setEnPausa(boolean enPausa) {
         this.enPausa = enPausa;
@@ -187,10 +207,12 @@ public class level_00_desierto {
     public menu_pausa getPausa() {
         return pausa;
     }
+    
+    public player getPlayer() {
+        return this.player;
+    }
 
-
-
-
+    
 
 
 }
