@@ -10,56 +10,78 @@ import main.java.zoory07.HotSpace.entity.piedra;
 
 
 
-
-
 public class PoolPiedras {
-    public final List<piedra> libres = new ArrayList<>();
-    public final List<piedra> activas = new ArrayList<>();
-    public final BufferedImage sprite;
-    public final int ancho;
-    public final int alto;
-    public final int initialCapacity;
-
-    public PoolPiedras(BufferedImage sprite, int ancho, int alto, int capacity) {
+    
+    private final List<piedra> libres;
+    private final List<piedra> activas;
+    private final BufferedImage sprite;
+    private final int ancho;
+    private final int alto;
+    private final int capacidadInicial;
+    
+    public PoolPiedras(BufferedImage sprite, int ancho, int alto, int capacidad) {
         this.sprite = sprite;
         this.ancho = ancho;
         this.alto = alto;
-        this.initialCapacity = capacity;
-        for (int i = 0; i < capacity; i++) {
+        this.capacidadInicial = capacidad;
+        this.libres = new ArrayList<>(capacidad);
+        this.activas = new ArrayList<>(capacidad);
+        
+        prealocar();
+    }
+    
+    private void prealocar() {
+        for (int i = 0; i < capacidadInicial; i++) {
             libres.add(new piedra(sprite, ancho, alto));
         }
     }
-
+    
     /**
-     * Obtiene una piedra lista para usar o reciclada
+     * Obtiene una piedra lista para usar (reciclada o nueva)
      */
     public piedra obtain(int x, int y) {
         piedra p;
+        
         if (libres.isEmpty()) {
             p = new piedra(sprite, ancho, alto);
         } else {
             p = libres.remove(libres.size() - 1);
         }
+        
         p.init(x, y);
         activas.add(p);
         return p;
     }
-
+    
+    /**
+     * Devuelve una piedra al pool manualmente
+     */
+    public void free(piedra p) {
+        if (p == null) return;
+        
+        p.setActiva(false);
+        if (activas.remove(p)) {
+            libres.add(p);
+        }
+    }
+    
     /**
      * Actualiza todas las piedras activas y recicla las inactivas
      */
     public void updateAll(int velocidad) {
         Iterator<piedra> it = activas.iterator();
+        
         while (it.hasNext()) {
             piedra p = it.next();
             p.update(velocidad);
+            
             if (!p.isActiva()) {
                 it.remove();
                 libres.add(p);
             }
         }
     }
-
+    
     /**
      * Dibuja todas las piedras activas
      */
@@ -68,13 +90,49 @@ public class PoolPiedras {
             p.render(g);
         }
     }
-
+    
     /**
-     * Devuelve una lista inmodificable de las piedras activas
+     * Reinicia el pool a su estado inicial
      */
-    public Iterable<piedra> getActivas() {
+    public void reiniciar() {
+        // Reciclar todas las activas
+        for (piedra p : activas) {
+            p.setActiva(false);
+            libres.add(p);
+        }
+        activas.clear();
+        
+        // Asegurar capacidad mínima
+        while (libres.size() < capacidadInicial) {
+            libres.add(new piedra(sprite, ancho, alto));
+        }
+    }
+    
+    /**
+     * Lista de piedras activas (solo lectura)
+     */
+    public List<piedra> getActivas() {
         return Collections.unmodifiableList(activas);
     }
+    
+    // Getters útiles
+    public int getCantidadActivas() { 
+        return activas.size(); 
+    }
+    
+    public int getCantidadLibres() { 
+        return libres.size(); 
+    }
+    
+    public int getCapacidadTotal() { 
+        return libres.size() + activas.size(); 
+    }
+    
+    public int getCapacidadInicial() { 
+        return capacidadInicial; 
+    }
+    
+    public boolean hayActivas() {
+        return !activas.isEmpty();
+    }
 }
-
-

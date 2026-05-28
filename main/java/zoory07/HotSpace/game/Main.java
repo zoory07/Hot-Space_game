@@ -13,11 +13,13 @@ import main.java.zoory07.HotSpace.scenes.evento.tiempo;
 import main.java.zoory07.HotSpace.scenes.menus.Inicio_menu;
 import main.java.zoory07.HotSpace.scenes.menus.EscenaJuego;
 import main.java.zoory07.HotSpace.scenes.menus.menu_pausa;
+import main.java.zoory07.HotSpace.scenes.menus.menu_opciones;
 import javax.sound.sampled.LineUnavailableException;
 import java.awt.image.BufferStrategy;
 import java.io.IOException;
 import main.java.zoory07.HotSpace.scenes.Escena;
-
+import main.java.zoory07.HotSpace.scenes.MusicaManager;
+import main.java.zoory07.HotSpace.scenes.menus.menu_SeleccionJuegos;
 
 
 
@@ -27,24 +29,28 @@ public class Main extends Canvas {
     public static final int SCALE = 3;
     public static final int BASE_WIDTH = WIDTH * SCALE;
     public static final int BASE_HEIGHT = HEIGHT * SCALE;
-    public static String NAME = "HotSpace 1.0.1";
+    public static Main mainInstance;
+    public static String NAME = "HotSpace 1.1";
 
-    private static final int SCENE_SWITCH_DELAY = 200; 
+    private static final int SCENE_SWITCH_DELAY = 200;
     private long lastSceneChangeTime = 0;
 
     private JFrame Ventana;
     public boolean running = false;
-    public static teclado teclado;
+    public static InputManager input;
     public static SpriteSheet spriteSheet;
     public static tiempo tiempo;
 
     public static Escena escenaActual;
 
     private Inicio_menu escenaMenu;
+    private menu_SeleccionJuegos escenaSeleccion;
     private EscenaJuego escenaJuego;
     private menu_pausa escenaPausa;
+    private menu_opciones escenaOpciones;
+    
 
-    public void Game() throws IOException, LineUnavailableException, UnsupportedAudioFileException {
+    public void Game() throws IOException, LineUnavailableException, UnsupportedAudioFileException, Exception {
         setPreferredSize(new Dimension(BASE_WIDTH, BASE_HEIGHT));
         Ventana = new JFrame(NAME);
         Ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -56,23 +62,31 @@ public class Main extends Canvas {
         Ventana.setResizable(true);
         Ventana.revalidate();
 
-        teclado = new teclado();
+        input = new InputManager();
         this.setFocusable(true);
         this.requestFocusInWindow();
-        this.addKeyListener(teclado);
+        this.addKeyListener(input.teclado);
+        this.addMouseListener(input.raton);
+        this.addMouseMotionListener(input.raton);
 
         Image icon = ImageIO.read(getClass().getResourceAsStream("/resources/icono.png"));
         Ventana.setIconImage(icon);
-
+        menu_opciones.cargarConfiguracion();
+        MusicaManager.inicializar();
+        MusicaManager.reproducir("menu");
         spriteSheet = new SpriteSheet(ImageIO.read(getClass().getResourceAsStream("/resources/SpriteSheet.png")));
         tiempo = new tiempo();
         tiempo.iniciar();
         escenaMenu = new Inicio_menu();
-        escenaJuego = null; // se creará al entrar a jugar
-        escenaPausa = null; // se creará al pausar
+        escenaSeleccion = null;
+        escenaJuego = null;
+        escenaPausa = null;
+        escenaOpciones = null;
 
         escenaActual = escenaMenu;
         System.out.println("Escena inicial: Menu");
+
+        mainInstance = this;
     }
 
     public void Run() {
@@ -94,6 +108,7 @@ public class Main extends Canvas {
                 Ticks();
                 updates++;
                 delta--;
+                input.update();
             }
             Render();
             frame++;
@@ -114,11 +129,9 @@ public class Main extends Canvas {
     }
 
     public void Ticks() {
-        teclado.update();
         if (escenaActual != null) escenaActual.update();
 
         long now = System.currentTimeMillis();
-        // Si no paso el tiempo mínimo desde el ultimo cambio, no procesamos inputs
         if (now - lastSceneChangeTime < SCENE_SWITCH_DELAY) {
             return;
         }
@@ -127,19 +140,44 @@ public class Main extends Canvas {
         if (escenaActual instanceof Inicio_menu) {
             Inicio_menu menu = (Inicio_menu) escenaActual;
             if (menu.consumeConfirm()) {
-                if (menu.getSeleccion() == 0) { // "Jugar"
-                    try {
-                        escenaJuego = new EscenaJuego(spriteSheet, teclado, tiempo);
-                        switchScene(escenaJuego);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                } else if (menu.getSeleccion() == 1) { // "Salir"
-                    System.exit(0);
+                switch (menu.getSeleccion()) {
+                    case 0: // "Jugar" -> Va a seleccion de niveles
+                        try {
+                            escenaSeleccion = new menu_SeleccionJuegos();
+                            switchScene(escenaSeleccion);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        break;
+                    case 1: // "Opciones"
+                        try {
+                            escenaOpciones = new menu_opciones(escenaMenu);
+                            switchScene(escenaOpciones);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        break;
+                    case 2: // "Salir"
+                        System.exit(0);
+                        break;
                 }
             }
+        } else if (escenaActual instanceof menu_SeleccionJuegos) {
+            menu_SeleccionJuegos seleccion = (menu_SeleccionJuegos) escenaActual;
+            if (seleccion.consumeConfirm()) {
+                // Iniciar el nivel seleccionado
+                int nivel = seleccion.getNivelActual();
+                try {
+                    escenaJuego = new EscenaJuego(spriteSheet, input.teclado, tiempo, nivel);
+                    switchScene(escenaJuego);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else if (seleccion.consumeVolver()) {
+                switchScene(escenaMenu);
+            }
         } else if (escenaActual instanceof EscenaJuego) {
-            if (teclado.pausa) {
+            if (input.teclado.pausa) {
                 try {
                     escenaPausa = new menu_pausa(0, 0);
                     switchScene(escenaPausa);
@@ -150,24 +188,47 @@ public class Main extends Canvas {
         } else if (escenaActual instanceof menu_pausa) {
             menu_pausa pausa = (menu_pausa) escenaActual;
             if (pausa.consumeConfirm()) {
-                if (pausa.getSeleccion() == 0) { // "Reanudar"
-                    switchScene(escenaJuego);
-                } else if (pausa.getSeleccion() == 1) { // "Menu Principal"
-                    switchScene(escenaMenu);
+                switch (pausa.getSeleccion()) {
+                    case 0: // "Reanudar"
+                        switchScene(escenaJuego);
+                        break;
+                    case 1: // "Opciones"
+                        try {
+                            escenaOpciones = new menu_opciones(escenaPausa);
+                            switchScene(escenaOpciones);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        break;
+                    case 2: // "Menu Principal"
+                        switchScene(escenaMenu);
+                        break;
                 }
+            }
+        } else if (escenaActual instanceof menu_opciones) {
+            menu_opciones opciones = (menu_opciones) escenaActual;
+            if (opciones.consumeConfirm()) {
+                Escena anterior = opciones.getEscenaAnterior();
+                switchScene(anterior);
             }
         }
     }
 
     public void switchScene(Escena nuevaEscena) {
         escenaActual = nuevaEscena;
-        // Limpiar TODOS los flags del teclado
-        teclado.arriba = false;
-        teclado.abajo = false;
-        teclado.enter = false;
-        teclado.pausa = false;
+        input.clear();
 
-        // Nose esta cosa funcion pero me chupa un huevo :p
+        // Resetear la escena según su tipo
+        if (nuevaEscena instanceof Inicio_menu) {
+            ((Inicio_menu) nuevaEscena).reset();
+        } else if (nuevaEscena instanceof menu_SeleccionJuegos) {
+            ((menu_SeleccionJuegos) nuevaEscena).reset();
+        } else if (nuevaEscena instanceof menu_pausa) {
+            ((menu_pausa) nuevaEscena).reset();
+        } else if (nuevaEscena instanceof menu_opciones) {
+            ((menu_opciones) nuevaEscena).reset();
+        }
+
         lastSceneChangeTime = System.currentTimeMillis();
     }
 
@@ -199,7 +260,7 @@ public class Main extends Canvas {
         new Thread(this::Run).start();
     }
 
-    public static void main(String[] args) throws IOException, LineUnavailableException, UnsupportedAudioFileException {
+    public static void main(String[] args) throws IOException, LineUnavailableException, UnsupportedAudioFileException, Exception {
         Main main = new Main();
         main.Game();
         main.Start();

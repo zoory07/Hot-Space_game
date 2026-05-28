@@ -58,7 +58,7 @@ public class tiempo {
         int horas    = (int) ((tiempo / (1000 * 60 * 60)) % 24);
 
         String tiempoString = String.format("%02d:%02d:%02d", horas, minutos, segundos);
-        g.setFont(new Font("Arial", Font.BOLD, 20));
+        g.setFont(new Font("Jersey 10", Font.PLAIN, 30));
         g.setColor(Color.WHITE);
         g.drawString(tiempoString, x, y);
     }

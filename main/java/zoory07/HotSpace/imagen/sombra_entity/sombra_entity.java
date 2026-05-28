@@ -13,7 +13,8 @@ import java.awt.Graphics;
 
 public class sombra_entity { 
    public int x, y;
-   private int width,height;
+    public int width;
+    private int height;
 
    
    public sombra_entity( int y, int x, int width, int height) {

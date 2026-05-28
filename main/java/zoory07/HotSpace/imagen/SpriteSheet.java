@@ -25,14 +25,9 @@ public class SpriteSheet {
         List<BufferedImage> frames = new ArrayList<>();
         for (int i = 0; i < numFrames; i++) {
             int x = startX + (i * frameWidth);
-            int y = startY;
-            frames.add(getSprite(x, y, frameWidth, frameHeight));
+            frames.add(getSprite(x, startY, frameWidth, frameHeight));
         }
         return frames;
     }
-    
-  
-
- 
 }
 
