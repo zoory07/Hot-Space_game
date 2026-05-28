@@ -1,10 +1,8 @@
-![c](https://github.com/user-attachments/assets/4f8d9f9e-5f0a-446c-bd8b-232fb095067b)
+<img width="1221" height="806" alt="sssss" src="https://github.com/user-attachments/assets/d755bc3b-8771-49a1-b27c-ec1ce741b214" />
+
 
 Gameplay
-![Captura](https://github.com/user-attachments/assets/d6bbf8bd-3012-421d-af51-f70cad73ce22)
+<img width="1222" height="807" alt="sd" src="https://github.com/user-attachments/assets/435a6e7b-48b1-4779-8f3d-90e2e5ffecae" />
+<img width="1220" height="804" alt="dad" src="https://github.com/user-attachments/assets/8aa4bfd2-1939-466a-97c3-633d10f51778" />
 
-![gg](https://github.com/user-attachments/assets/52157750-b08b-468a-972b-d387f7ae6a1e)
 
-
-Como monto el juego.?
-Crea un proyecto en blanco, copia todo el codigo o descarga, y listo ya tiene el juego. Para modificarlo o hacer un juego aparte.
