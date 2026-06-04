@@ -1,0 +1,52 @@
+name: Build HotSpace
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Build Windows
+        run: ant native-windows
+      - uses: actions/upload-artifact@v3
+        with:
+          name: HotSpace-Windows
+          path: dist/HotSpace-*.zip
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Build Linux
+        run: ant native-linux
+      - uses: actions/upload-artifact@v3
+        with:
+          name: HotSpace-Linux
+          path: dist/HotSpace-*.tar.gz
+
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Build Mac
+        run: ant native-mac
+      - uses: actions/upload-artifact@v3
+        with:
+          name: HotSpace-Mac
+          path: dist/HotSpace-*.tar.gz
