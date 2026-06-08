@@ -4,13 +4,13 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import main.java.zoory07.HotSpace.game.Main;
 import main.java.zoory07.HotSpace.imagen.hitbox;
-import main.java.zoory07.HotSpace.imagen.sombra_entity.sombra_entity;
+
 
 
 public class piedra extends Entity {
     
     private final BufferedImage sprite;
-    private sombra_entity sombra;
+    
     
     // Offsets del hitbox
     private static final int HITBOX_OFFSET_X = 50;
@@ -30,9 +30,8 @@ public class piedra extends Entity {
        this.hitbox = new hitbox(0, 0, hbW, hbH);
     
    
-       int sombraW = (int) (width * 0.9);  
-       int sombraH = 15;  // Altura fija para elipse
-       this.sombra = new sombra_entity(0, 0, sombraW, sombraH);
+
+       
     }
     
     /**
@@ -45,7 +44,7 @@ public class piedra extends Entity {
         this.mostrarHitbox = false;
         
         actualizarHitbox();
-        actualizarSombra(); 
+        
     }
     
     private void actualizarHitbox() {
@@ -58,16 +57,7 @@ public class piedra extends Entity {
     }
     
 
-    private void actualizarSombra() {
-        if (sombra == null) return;
-    
-        int sombraX = x + (width / 2) - (sombra.width / 2) + 25;
-        int sombraY = y + (int)(height * 0.7);
-    
-        sombra.x = sombraX;
-        sombra.y = sombraY;
-        sombra.update();
-    }
+
     
     @Override
     public void update(int velocidad) {
@@ -75,7 +65,7 @@ public class piedra extends Entity {
         
         y += velocidad;
         actualizarHitbox();
-        actualizarSombra(); 
+       
         
         if (y > Main.BASE_HEIGHT) {
             activa = false;
@@ -86,10 +76,7 @@ public class piedra extends Entity {
     public void render(Graphics g) {
         if (!activa) return;
         
-        // Dibujar sombra PRIMERO (debajo del sprite)
-        if (sombra != null) {
-            sombra.render(g);
-        }
+
         
         // Dibujar sprite
         int adjX = x + (width - sprite.getWidth()) / 2;

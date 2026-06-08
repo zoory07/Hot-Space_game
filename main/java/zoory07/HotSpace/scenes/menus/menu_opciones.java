@@ -50,6 +50,9 @@ public class menu_opciones implements Escena {
     private boolean confirm = false;
     private boolean enterReady = true;
     private Sound sonidoMenu;
+    
+    private int ventanaAncho = Main.BASE_WIDTH * Main.SCALE;
+    private int ventanaAlto  = Main.BASE_HEIGHT * Main.SCALE;
 
     public menu_opciones(Escena escenaAnterior) throws IOException, LineUnavailableException, UnsupportedAudioFileException {
         this.escenaAnterior = escenaAnterior;
@@ -226,28 +229,37 @@ public class menu_opciones implements Escena {
     }
 
     private void aplicarPantallaCompleta() {
-        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-        Container container = Main.mainInstance.getParent();
-        while (container != null && !(container instanceof javax.swing.JFrame)) {
-            container = container.getParent();
-        }
-        if (container == null) return;
-        javax.swing.JFrame ventana = (javax.swing.JFrame) container;
-        if (pantallaCompleta) {
-            ventana.dispose();
-            ventana.setUndecorated(true);
-            gd.setFullScreenWindow(ventana);
-            ventana.setVisible(true);
+       GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+
+       Container container = Main.mainInstance.getParent();
+       while (container != null && !(container instanceof javax.swing.JFrame)) {
+        container = container.getParent();
+       }
+
+       if (container == null) return;
+
+       javax.swing.JFrame ventana = (javax.swing.JFrame) container;
+
+       if (pantallaCompleta) {
+        ventanaAncho = ventana.getWidth();
+        ventanaAlto  = ventana.getHeight();
+
+        ventana.dispose();
+        ventana.setUndecorated(true);
+        ventana.setVisible(true);
+        gd.setFullScreenWindow(ventana);
         } else {
-            gd.setFullScreenWindow(null);
-            ventana.dispose();
-            ventana.setUndecorated(false);
-            ventana.setSize(Main.BASE_WIDTH, Main.BASE_HEIGHT);
-            ventana.setLocationRelativeTo(null);
-            ventana.setVisible(true);
-        }
-        Main.mainInstance.requestFocus();
+        gd.setFullScreenWindow(null);
+        ventana.dispose();
+        ventana.setUndecorated(false);
+        ventana.setVisible(true);
+        // Restaurar tamaño anterior
+        ventana.setSize(ventanaAncho, ventanaAlto);
+        ventana.setLocationRelativeTo(null);
     }
+
+    Main.mainInstance.requestFocus();
+  }
 
     @Override
     public void render(Graphics g) {
@@ -257,11 +269,13 @@ public class menu_opciones implements Escena {
             g.setColor(new Color(20, 20, 40));
             g.fillRect(0, 0, 900, 600);
         }
-
+        DibujoFondoDeMenu(g);
         g.setFont(new Font("Jersey 10", Font.PLAIN, 60));
         g.setColor(Color.WHITE);
         g.drawString("OPCIONES", 320, 100);
-
+        g.setColor(Color.black);
+        
+         
         for (int i = 0; i < opciones.length; i++) {
             int x = MENU_X;
             int y = MENU_Y_START + i * MENU_SPACING;
@@ -284,10 +298,22 @@ public class menu_opciones implements Escena {
         }
 
         g.setFont(new Font("Jersey 10", Font.PLAIN, 18));
-        g.setColor(Color.BLACK);
+        g.setColor(Color.WHITE);
         g.drawString("Clic en barra para ajustar  |  <- -> teclado  |  ESC volver", 220, 520);
+        
     }
+    
+    public void DibujoFondoDeMenu(Graphics g) {
+      int ancho = 800;
+      int alto = 500;
+      int x = (900 - ancho) / 2;
+      int y = (600 - alto) / 2;
 
+      Graphics2D g2d = (Graphics2D) g;
+      g2d.setColor(new Color(0, 0, 0, 150));
+      g2d.fillRect(x, y, ancho, alto);
+   }
+    
     private void dibujarBarraVolumen(Graphics g, int x, int y, int valor, boolean selected) {
         g.setColor(Color.DARK_GRAY);
         g.fillRect(x, y, BARRA_ANCHO, BARRA_ALTO);

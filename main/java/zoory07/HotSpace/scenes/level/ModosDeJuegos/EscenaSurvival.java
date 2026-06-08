@@ -52,6 +52,7 @@ public class EscenaSurvival implements Escena {
     private GeneradorDeArbustoMuerto generadorArbustos;
     private EffectAtrapado effectAtrapado;
     private int timerDificultad = 0;
+    private int ySueloActual = 500;
     
     public EscenaSurvival(SpriteSheet ss, teclado t, tiempo tiempoGlobal) throws IOException, LineUnavailableException, UnsupportedAudioFileException {
         this.spritesheet = ss;
@@ -70,100 +71,115 @@ public class EscenaSurvival implements Escena {
     }
     
     private void inicializarNivel() throws IOException {
-      List<BufferedImage> correr = spritesheet.getAnimationFrames(357, 0, 30, 30, 4);
-      List<BufferedImage> gameOverFrames = spritesheet.getAnimationFrames(150, 0, 30, 30, 1);
-      List<BufferedImage> atrapadoFrames = spritesheet.getAnimationFrames(330, 30, 30, 30, 5);
-      
-      BufferedImage spriteCubo = spritesheet.getSprite(60, 60, 30, 30);
-      generadorDeCubos = new GeneradorDeCubos(spriteCubo, 30, 30, 900, 600, intervalo);
+        List<BufferedImage> correr = spritesheet.getAnimationFrames(357, 0, 30, 30, 4);
+        List<BufferedImage> gameOverFrames = spritesheet.getAnimationFrames(150, 0, 30, 30, 1);
+        List<BufferedImage> atrapadoFrames = spritesheet.getAnimationFrames(330, 30, 30, 30, 5);
+        
+        BufferedImage spriteCubo = spritesheet.getSprite(60, 60, 30, 30);
+        generadorDeCubos = new GeneradorDeCubos(spriteCubo, 30, 30, 900, 600, intervalo);
 
-      int playerY = generadorDeCubos.getCentroHueco() - 45;
-      player = new player(300, playerY, correr, teclado, 100, gameOverFrames, null);
-    
-     
-      
-      player.setAnimacionAtrapado(atrapadoFrames, 150);
+        int playerY = generadorDeCubos.getCentroHueco() - 45;
+        player = new player(300, playerY, correr, teclado, 100, gameOverFrames, null);
 
-      collisionManager.addHitbox(player.getHitbox());
-      eventoColision = new EventoColision(player, new ArrayList<piedra>(), tiempo);
+        player.sombra.setFijarEnSuelo(true);
+        ySueloActual = generadorDeCubos.getYFinHueco() - 30;
+        player.sombra.setLimiteSuelo(ySueloActual);
 
-      fisica = new FisicaManager();
-      reinicioLevel.setNivelSurvival(this);
+        player.setAnimacionAtrapado(atrapadoFrames, 150);
 
-      BufferedImage spritePunta   = spritesheet.getSprite(180, 30, 30, 30);
-      BufferedImage spriteArbusto = spritesheet.getSprite(35, 30, 30, 30);
-      generadorArbustos = new GeneradorDeArbustoMuerto(spriteArbusto, 60, 60, 900, 600, 180, generadorDeCubos);
-      generadorDePuntas = new GeneradorDePuntas(spritePunta, 30, 30, 900, 600, 90);
+        collisionManager.addHitbox(player.getHitbox());
+        eventoColision = new EventoColision(player, new ArrayList<piedra>(), tiempo);
 
-      effectAtrapado = new EffectAtrapado(180, 0.3f);
-   }
+        fisica = new FisicaManager();
+        reinicioLevel.setNivelSurvival(this);
+
+        BufferedImage spritePunta   = spritesheet.getSprite(180, 30, 30, 30);
+        BufferedImage spriteArbusto = spritesheet.getSprite(35, 30, 30, 30);
+        generadorArbustos = new GeneradorDeArbustoMuerto(spriteArbusto, 60, 60, 900, 600, 180, generadorDeCubos);
+        generadorDePuntas = new GeneradorDePuntas(spritePunta, 30, 30, 900, 600, 90);
+
+        effectAtrapado = new EffectAtrapado(180, 0.3f);
+    }
     
     @Override
     public void update() {
-      deciertoAnimacion.update();
-    
-      if (!gameOver) {
+        deciertoAnimacion.update();
         
-        timerDificultad++;
-        if (timerDificultad >= 1800) {
-            timerDificultad = 0;
-            velocidad++;
-            generadorDeCubos.setIntervalo(Math.max(5, 30 / velocidad));
-            generadorDePuntas.setIntervalo(Math.max(30, 90 - velocidad * 5));
-            generadorArbustos.setIntervalo(Math.max(60, 180 - velocidad * 10));
-        }
+        if (!gameOver) {
+            timerDificultad++;
+            if (timerDificultad >= 1800) {
+                timerDificultad = 0;
+                velocidad++;
+                intervalo = Math.max(5, 30 / velocidad);
+                generadorDeCubos.setIntervalo(intervalo);
+                generadorDeCubos.setVelocidad(velocidad);
+                generadorDePuntas.setIntervalo(Math.max(30, 90 - velocidad * 5));
+                generadorArbustos.setIntervalo(Math.max(60, 180 - velocidad * 10));
+            }
 
-        fisica.update(player);
-        fisica.resolverColisionesCubos(player, generadorDeCubos.getActivos());
+            // CAMBIADO — guardar estado antes de actualizar físicas
+            boolean estabaEnAire = !fisica.isEnSuelo();
 
-        if (teclado.espacio) {
-            fisica.saltar();
-        }
+            fisica.update(player);
+            fisica.resolverColisionesCubos(player, generadorDeCubos.getActivos());
 
-        if (fisica.colisionConArbusto(player, generadorArbustos.getActivos())) {
-            sonidoArbusto.play();
-            effectAtrapado.activar();
-        }
-        effectAtrapado.update();
+            // Actualizar sombra solo al aterrizar
+            boolean aterrizo = estabaEnAire && fisica.isEnSuelo();
+            if (aterrizo) {
+                ySueloActual = player.y + player.getHitbox().getHeight();
+                player.sombra.setLimiteSuelo(ySueloActual);
+            }
 
-        int velocidadActual = effectAtrapado.aplicar(velocidad);
-        player.setAtrapado(effectAtrapado.isActivo());
-        player.setVelocidad(effectAtrapado.isActivo() ? (int)(15 * 0.3f) : 15);
+            if (teclado.espacio) {
+                fisica.saltar();
+            }
 
-        player.update(velocidadActual);
-        generadorDeCubos.update(velocidadActual);
-        generadorDePuntas.update(velocidadActual);
-        generadorArbustos.update(velocidadActual);
+            if (fisica.colisionConArbusto(player, generadorArbustos.getActivos())) {
+                sonidoArbusto.play();
+                effectAtrapado.activar();
+            }
+            effectAtrapado.update();
 
-        if (player.y < -100 || player.y > 600) {
-            gameOver = true;
-            player.setGameOver();
-            sonido.play();
+            int velocidadActual = effectAtrapado.aplicar(velocidad);
+            player.setAtrapado(effectAtrapado.isActivo());
+            player.setVelocidad(effectAtrapado.isActivo() ? (int)(15 * 0.3f) : 15);
+
+            player.update(velocidadActual);
+            generadorDeCubos.update(velocidadActual);
+            generadorDePuntas.update(velocidadActual);
+            generadorArbustos.update(velocidadActual);
+
+            if (player.y < -100 || player.y > 600) {
+                gameOver = true;
+                player.setGameOver();
+                sonido.play();
+                deciertoAnimacion.detenerAnimacion();
+                tiempo.pausar();
+                return;
+            }
+
+            if (fisica.colisionConPuntas(player, generadorDePuntas.getActivos())) {
+                gameOver = true;
+                player.setGameOver();
+                sonido.play();
+                deciertoAnimacion.detenerAnimacion();
+                tiempo.pausar();
+                return;
+            }
             
-            deciertoAnimacion.detenerAnimacion();
-            return;
-        }
+            eventoColision.checkColision();
 
-        if (fisica.colisionConPuntas(player, generadorDePuntas.getActivos())) {
-            gameOver = true;
-            player.setGameOver();
-            sonido.play();
-            deciertoAnimacion.detenerAnimacion();
-            return;
+            if (eventoColision.isGameOver()) {
+                gameOver = true;
+                player.setGameOver();
+                sonido.play();
+                deciertoAnimacion.detenerAnimacion();
+                tiempo.pausar();
+            }
+        } else {
+            reinicioLevel.reiniciar();
         }
-        
-        eventoColision.checkColision();
-
-        if (eventoColision.isGameOver()) {
-            gameOver = true;
-            player.setGameOver();
-            sonido.play();
-            deciertoAnimacion.detenerAnimacion();
-        }
-    } else {
-        reinicioLevel.reiniciar();
     }
-  }
     
     @Override
     public void render(Graphics g) {
@@ -188,28 +204,26 @@ public class EscenaSurvival implements Escena {
         g.drawString("Presiona ENTER", 300, 320);
     }
     
-    public boolean isGameOver() { 
-        return gameOver; 
-    }
-    public player getPlayer(){ 
-        return player; 
-    }
+    public boolean isGameOver() { return gameOver; }
+    public player getPlayer()   { return player; }
     
     public void reiniciarNivel() {
-      velocidad  = 2;          
-      timerDificultad = 0;         
-      intervalo  = 30 / velocidad; 
-      player.setVelocidad(15);
-      generadorDeCubos.reiniciar();
-      generadorDePuntas.reiniciar();
-      generadorArbustos.reiniciar();
-      effectAtrapado.reiniciar();
-      tiempo.reiniciar();
-      gameOver = false;
-      eventoColision.reiniciar();
-      fisica.reiniciar();
-      if (player != null) player.reiniciar();
-      if (deciertoAnimacion != null) deciertoAnimacion.reiniciarAnimacion();
-      tiempo.reanudar();
+        velocidad       = 2;
+        timerDificultad = 0;
+        intervalo       = 30 / velocidad;
+        player.setVelocidad(15);
+        generadorDeCubos.reiniciar();
+        generadorDePuntas.reiniciar();
+        generadorArbustos.reiniciar();
+        effectAtrapado.reiniciar();
+        tiempo.reiniciar();
+        gameOver = false;
+        eventoColision.reiniciar();
+        fisica.reiniciar();
+        if (player != null) player.reiniciar();
+        if (deciertoAnimacion != null) deciertoAnimacion.reiniciarAnimacion();
+        ySueloActual = generadorDeCubos.getYFinHueco() - 30;
+        player.sombra.setLimiteSuelo(ySueloActual);
+        tiempo.reanudar();
     }
 }

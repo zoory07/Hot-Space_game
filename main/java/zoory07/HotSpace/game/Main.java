@@ -30,7 +30,7 @@ public class Main extends Canvas {
     public static final int BASE_WIDTH = WIDTH * SCALE;
     public static final int BASE_HEIGHT = HEIGHT * SCALE;
     public static Main mainInstance;
-    public static String NAME = "HotSpace 1.1";
+    public static String NAME = "HotSpace 1.1.1";
 
     private static final int SCENE_SWITCH_DELAY = 200;
     private long lastSceneChangeTime = 0;
@@ -144,8 +144,8 @@ public class Main extends Canvas {
                     case 0: // "Jugar" -> Va a seleccion de niveles
                         try {
                             escenaSeleccion = new menu_SeleccionJuegos();
-                            switchScene(escenaSeleccion);
-                        } catch (Exception e) {
+                            switchScene(escenaSeleccion); 
+                       } catch (Exception e) {
                             e.printStackTrace();
                         }
                         break;
@@ -179,6 +179,7 @@ public class Main extends Canvas {
         } else if (escenaActual instanceof EscenaJuego) {
             if (input.teclado.pausa) {
                 try {
+                    tiempo.pausar();
                     escenaPausa = new menu_pausa(0, 0);
                     switchScene(escenaPausa);
                 } catch (Exception e) {
@@ -190,6 +191,7 @@ public class Main extends Canvas {
             if (pausa.consumeConfirm()) {
                 switch (pausa.getSeleccion()) {
                     case 0: // "Reanudar"
+                        tiempo.reanudar();
                         switchScene(escenaJuego);
                         break;
                     case 1: // "Opciones"
@@ -201,6 +203,7 @@ public class Main extends Canvas {
                         }
                         break;
                     case 2: // "Menu Principal"
+                        tiempo.reiniciar();
                         switchScene(escenaMenu);
                         break;
                 }

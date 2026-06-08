@@ -10,59 +10,68 @@ import java.awt.Image;
 
 public class sombra_player {
    public int x, y;
-   private int width,height;
+   private int width, height;
    private Image frameActual;
-   
-   
-   public sombra_player( int y, int x, int width, int height) {
+   private int limiteMinY = 420;  
+   private boolean fijarEnSuelo = false;  
+
+   public sombra_player(int y, int x, int width, int height) {
         this.x = x;
         this.y = y;
         this.height = height;
         this.width = width;
-        
    }
+
+   public void update() {
+   }
+
+   public void setLimiteSuelo(int y) {
+        this.limiteMinY = y;
+   }
+
+   public int getLimiteSuelo() {
+        return limiteMinY;
+   }
+
    
-  
-  
-  public void update(){
-    
-  }
-  
- public void render(Graphics g) {
-    // Calcular posición de la sombra basada en la posición del jugador
-    int offsetX = 16;
-    int offsetY = 36;
-    int xSombra = x + offsetX;
-    int ySombra = y + offsetY;
-    int limiteMinX = 18; 
-    int limiteMaxX = 895;
-    int limiteMinY = 420;
-    int limiteMaxY = 960;
-    
-    
-    if (xSombra < limiteMinX) {
-        xSombra = limiteMinX;
-    } else if (xSombra + width > limiteMaxX) {
-        xSombra = limiteMaxX - width;
-    }
+   public void setFijarEnSuelo(boolean fijar) {
+        this.fijarEnSuelo = fijar;
+   }
 
-    if (ySombra < limiteMinY) {
-        ySombra = limiteMinY;
-    } else if (ySombra + height / 4 > limiteMaxY) {
-        ySombra = limiteMaxY - height / 4;
-    }
+   public void render(Graphics g) {
+        int offsetX = 16;
+        int xSombra = x + offsetX;
+        int ySombra;
 
-    // Dibujar la sombra
-    g.setColor(new Color(0, 0, 0, 100));
-    g.fillOval(xSombra, ySombra, width, height / 4);
+        if (fijarEnSuelo) {
+            // Survival — sombra siempre en el suelo
+            ySombra = limiteMinY;
+        } else {
+            // Arcade y Contrarreloj — sombra sigue al player
+            int offsetY = 36;
+            ySombra = y + offsetY;
 
-    // Dibujar al jugador
-    g.drawImage(frameActual, x, y, null);
- }
+            int limiteMinYLocal = 420;
+            int limiteMaxY = 960;
 
+            if (ySombra < limiteMinYLocal) {
+                ySombra = limiteMinYLocal;
+            } else if (ySombra + height / 4 > limiteMaxY) {
+                ySombra = limiteMaxY - height / 4;
+            }
+        }
 
+        int limiteMinX = 18;
+        int limiteMaxX = 895;
 
+        if (xSombra < limiteMinX) {
+            xSombra = limiteMinX;
+        } else if (xSombra + width > limiteMaxX) {
+            xSombra = limiteMaxX - width;
+        }
 
+        g.setColor(new Color(0, 0, 0, 100));
+        g.fillOval(xSombra, ySombra, width, height / 4);
+        g.drawImage(frameActual, x, y, null);
+   }
 }
-    
-

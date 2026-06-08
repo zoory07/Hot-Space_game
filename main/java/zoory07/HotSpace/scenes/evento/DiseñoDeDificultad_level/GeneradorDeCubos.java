@@ -87,7 +87,12 @@ public class GeneradorDeCubos {
         alturaSupelo = ALTURA_MIN;
         preLlenarTerreno();        
     }
-
+    
+    
+    public void setVelocidad(int velocidad) {
+        this.intervalo = Math.max(1, tamCubo / velocidad);
+    }
+    
     public void setIntervalo(int intervalo) { 
         this.intervalo = intervalo; 
     }
